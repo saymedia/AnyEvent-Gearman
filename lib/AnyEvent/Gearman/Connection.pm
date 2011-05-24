@@ -97,7 +97,7 @@ sub connect {
                 on_read  => sub { $self->process_packet },
                 on_error => sub {
                     my @undone = @{ $self->_need_handle },
-                                 values %{ $self->_job_handles };
+                                 map { @$_ } values %{ $self->_job_handles };
                     $_->event('on_fail') for @undone;
 
                     $self->_need_handle([]);
