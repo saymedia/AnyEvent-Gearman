@@ -46,7 +46,7 @@ sub process_packet_8 {          # JOB_CREATED
         my $task = shift @{ $self->_need_handle } or return;
 
         $task->job_handle($job_handle);
-        $self->_job_handles->{ $job_handle } = $task;
+        push @{ $self->_job_handles->{ $job_handle } ||= [] }, $task;
         $task->event( 'on_created' );
     });
     weaken $self;
@@ -67,8 +67,10 @@ sub process_packet_12 {         # WORK_STATUS
             $_[0]->unshift_read( chunk => $len, sub {
                 my $denominator = $_[1];
 
-                my $task = $self->_job_handles->{ $job_handle } or return;
-                $task->event( on_status => $numerator, $denominator );
+                my $tasks = $self->_job_handles->{ $job_handle } or return;
+                for my $task (@$tasks) {
+                    $task->event( on_status => $numerator, $denominator );
+                }
             });
         });
     });
@@ -81,8 +83,10 @@ sub process_packet_13 {         # WORK_COMPLETE
     push @_, sub {
         my ($job_handle, $data) = @_;
 
-        my $task = delete $self->_job_handles->{ $job_handle } or return;
-        $task->event( on_complete => $data );
+        my $tasks = delete $self->_job_handles->{ $job_handle } or return;
+        for my $task (@$tasks) {
+            $task->event( on_complete => $data );
+        }
     };
     weaken $self;
 
@@ -95,8 +99,10 @@ sub process_packet_14 {         # WORK_FAIL
 
     $handle->unshift_read( chunk => $len, sub {
         my $job_handle = $_[1];
-        my $task       = delete $self->_job_handles->{ $job_handle } or return;
-        $task->event('on_fail');
+        my $tasks      = delete $self->_job_handles->{ $job_handle } or return;
+        for my $task (@$tasks) {
+            $task->event('on_fail');
+        }
     });
     weaken $self;
 }
@@ -106,8 +112,10 @@ sub process_packet_25 {         # WORK_EXCEPTION
 
     push @_, sub {
         my ($job_handle, $data) = @_;
-        my $task = $self->_job_handles->{ $job_handle } or return;
-        $task->event( on_exception => $data );
+        my $tasks = $self->_job_handles->{ $job_handle } or return;
+        for my $task (@$tasks) {
+            $task->event( on_exception => $data );
+        }
     };
     Scalar::Util::weaken($self);
 
@@ -120,8 +128,10 @@ sub process_packet_28 {         # WORK_DATA
     push @_, sub {
         my ($job_handle, $data) = @_;
 
-        my $task = $self->_job_handles->{ $job_handle } or return;
-        $task->event( on_data => $data );
+        my $tasks = $self->_job_handles->{ $job_handle } or return;
+        for my $task (@$tasks) {
+            $task->event( on_data => $data );
+        }
     };
     weaken $self;
 
@@ -133,9 +143,11 @@ sub process_packet_29 {         # WORK_WARNING
 
     push @_, sub {
         my ($job_handle, $data) = @_;
-        my $task = $self->_job_handles->{ $job_handle } or return;
+        my $tasks = $self->_job_handles->{ $job_handle } or return;
 
-        $task->event( on_warning => $data );
+        for my $task (@$tasks) {
+            $task->event( on_warning => $data );
+        }
     };
     weaken $self;
 
