@@ -29,5 +29,14 @@ $worker->register_function("sum" => sub {
     $res;
 });
 
+my $times_called = 0;
+$worker->register_function("sleep" => sub {
+    my $job = shift;
+    my $arg = $job->arg;
+
+    select undef, undef, undef, 0.5;
+    return ++$times_called;
+});
+
 $worker->work while 1;
 
