@@ -21,7 +21,8 @@ sub run_tests {
         prefix      => 'prefix',
     );
 
-    # test that jobs with the same handle 
+    # test that coalesced jobs from the same client all have their callbacks
+    # fired and have the same value returned
 
     my %success;
     my $cv = AnyEvent->condvar;
@@ -29,8 +30,11 @@ sub run_tests {
     # timeout if a job's callbacks are never called
     my $watchdog = AE::timer(1, 0, sub { $cv->send });
 
-    # subject the same job several times; the 'sleep' worker sleeps for a brief time
-    # to make sure the jobs won't complete before all of them are submitted
+    # submit the same job several times; the 'sleep' worker sleeps for a brief time
+    # to make sure the jobs won't complete until all of them are submitted.
+    # TODO: fix sleep race condition. could be done by only having worker
+    # function return once it receives a SIGUSR1 or something from this client.
+
     my $jobs = 3;
     $cv->begin(sub { $cv->send });
     for my $task (1 .. $jobs) {
