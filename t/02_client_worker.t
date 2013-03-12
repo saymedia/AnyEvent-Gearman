@@ -56,7 +56,7 @@ package My::AnyEvent::Gearman::Client::Connection {
     
     sub add_task {
         my $self = shift;
-        $self->number_of_tasks_managed++;
+        $self->number_of_tasks_managed($self->number_of_tasks_managed + 1);
         return $self->SUPER::add_task(@_);
     }
 }
