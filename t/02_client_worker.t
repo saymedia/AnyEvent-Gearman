@@ -24,18 +24,18 @@ package AnyEvent::Gearman::Types {
     use Any::Moose '::Util::TypeConstraints';
 
     subtype 'My::AnyEvent::Gearman::Client::Connections'
-	=> as 'ArrayRef[AnyEvent::Gearman::Client::Connection]';
+        => as 'ArrayRef[AnyEvent::Gearman::Client::Connection]';
 
     subtype 'My::AnyEvent::Gearman::Client::StrConnections'
-	=> as 'ArrayRef[Str]';
+        => as 'ArrayRef[Str]';
 
     coerce 'My::AnyEvent::Gearman::Client::Connections'
-	=> from 'My::AnyEvent::Gearman::Client::StrConnections' => via {
-	    for my $con (@$_) {
-		next if ref($con) and $con->isa('My::AnyEvent::Gearman::Client::Connection');
-		$con = My::AnyEvent::Gearman::Client::Connection->new( hostspec => $con );
-	    }
-	    $_;
+        => from 'My::AnyEvent::Gearman::Client::StrConnections' => via {
+            for my $con (@$_) {
+                next if ref($con) and $con->isa('My::AnyEvent::Gearman::Client::Connection');
+                $con = My::AnyEvent::Gearman::Client::Connection->new( hostspec => $con );
+            }
+            $_;
     };
 
     no Any::Moose;
@@ -47,9 +47,9 @@ package My::AnyEvent::Gearman::Client::Connection {
     extends 'AnyEvent::Gearman::Client::Connection';
 
     has number_of_tasks_managed => (
-	is => 'rw',
-	isa => 'Int',
-	default => 0,
+        is => 'rw',
+        isa => 'Int',
+        default => 0,
     );
 
     no Any::Moose;
@@ -57,7 +57,7 @@ package My::AnyEvent::Gearman::Client::Connection {
     sub add_task {
         my $self = shift;
         $self->number_of_tasks_managed++;
-	return $self->SUPER::add_task(@_);
+        return $self->SUPER::add_task(@_);
     }
 }
 
@@ -66,10 +66,10 @@ package My::AnyEvent::Gearman::Client {
     extends 'AnyEvent::Gearman::Client';
 
     has job_servers => (
-	is       => 'rw',
-	isa      => 'My::AnyEvent::Gearman::Client::Connections',
-	required => 1,
-	coerce   => 1,
+        is       => 'rw',
+        isa      => 'My::AnyEvent::Gearman::Client::Connections',
+        required => 1,
+        coerce   => 1,
     );
 
     no Any::Moose;
@@ -97,17 +97,17 @@ sub run_tests {
     my $client = My::AnyEvent::Gearman::Client->new(
         job_servers => [$server_hostspec1,
                         $server_hostspec2,
-	                $server_hostspec3,
-	                $server_hostspec4,
-	                $server_hostspec5],
+                        $server_hostspec3,
+                        $server_hostspec4,
+                        $server_hostspec5],
     );
 
     my $worker = AnyEvent::Gearman::Worker->new(
         job_servers => [$server_hostspec1,
                         $server_hostspec2,
-	                $server_hostspec3,
-	                $server_hostspec4,
-	                $server_hostspec5],
+                        $server_hostspec3,
+                        $server_hostspec4,
+                        $server_hostspec5],
     );
 
     $worker->register_function( reverse => sub {
@@ -116,23 +116,23 @@ sub run_tests {
         $job->complete($res);
     });
     for (1..$number_of_jobs) {
-	      my $cv = AnyEvent->condvar;
-	      my $task = $client->add_task(
-	          reverse => 'Hello!',
-	          on_complete => sub {
-	              $cv->send($_[1]);
-	          },
-	          on_fail => sub {
-	              $cv->send('fail');
-	          },
-	          on_created => sub {
-	              my ($task) = @_;
-	              my $job_handle = $task->job_handle;
-	              ok($job_handle, "Got JOB_CREATED message, got job_handle '$job_handle'");
-	          }
-	      );
-	      ok(!$task->job_handle, 'No job_handle yet');
-	      is $cv->recv, reverse('Hello!'), 'reverse ok';
+              my $cv = AnyEvent->condvar;
+              my $task = $client->add_task(
+                  reverse => 'Hello!',
+                  on_complete => sub {
+                      $cv->send($_[1]);
+                  },
+                  on_fail => sub {
+                      $cv->send('fail');
+                  },
+                  on_created => sub {
+                      my ($task) = @_;
+                      my $job_handle = $task->job_handle;
+                      ok($job_handle, "Got JOB_CREATED message, got job_handle '$job_handle'");
+                  }
+              );
+              ok(!$task->job_handle, 'No job_handle yet');
+              is $cv->recv, reverse('Hello!'), 'reverse ok';
     }
 
     # this section is a probabilistic test showing that given a set function
@@ -140,10 +140,10 @@ sub run_tests {
     my @job_server_connections =  @{ $client->job_servers };
     my $job_sum = 0;
     foreach my $js (@job_server_connections) {
-	my $jobs = $js->number_of_tasks_managed;
+        my $jobs = $js->number_of_tasks_managed;
         ok($jobs == 0 || $jobs == $number_of_jobs, 
-	   "correct number of jobs: ". $jobs);
-	$job_sum += $jobs;
+           "correct number of jobs: ". $jobs);
+        $job_sum += $jobs;
     }
 
     ok($number_of_jobs == $job_sum, "all jobs accounted for ". $job_sum);
@@ -183,16 +183,16 @@ package My::Gearman::Server {
     use fields qw( number_of_tasks_managed );
 
     sub new {
-	my ($class, %opts) = @_;
-	my $self = fields::new($class);
-	$self->SUPER::new(%opts);                # init base fields
-	$self->{number_of_tasks_managed} = 0;    # init own fields
-	return $self;
+        my ($class, %opts) = @_;
+        my $self = fields::new($class);
+        $self->SUPER::new(%opts);                # init base fields
+        $self->{number_of_tasks_managed} = 0;    # init own fields
+        return $self;
     }
     sub add_task  {
-	my $self = shift;
-	$self->{number_of_tasks_managed}++;
-	return self->SUPER::add_task(@_);
+        my $self = shift;
+        $self->{number_of_tasks_managed}++;
+        return self->SUPER::add_task(@_);
     }
 }
 
@@ -202,12 +202,12 @@ if (!defined $child) {
 }
 elsif ($child == 0) {
     my @job_servers = (
-    my $server1 = My::Gearman::Server->new( port => $port1 ),
-    my $server2 = My::Gearman::Server->new( port => $port2 ),
-    my $server3 = My::Gearman::Server->new( port => $port3 ),
-    my $server4 = My::Gearman::Server->new( port => $port4 ),
-    my $server5 = My::Gearman::Server->new( port => $port5 ),
-	);
+        my $server1 = My::Gearman::Server->new( port => $port1 ),
+        my $server2 = My::Gearman::Server->new( port => $port2 ),
+        my $server3 = My::Gearman::Server->new( port => $port3 ),
+        my $server4 = My::Gearman::Server->new( port => $port4 ),
+        my $server5 = My::Gearman::Server->new( port => $port5 ),
+    );
     Danga::Socket->EventLoop;
     exit;
 }
