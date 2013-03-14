@@ -50,7 +50,7 @@ sub _add_task {
             return;
         }
 
-        # hashed based on the concatinating of funciton and workload as strings
+        # hashed based on the concatenating of function and workload as strings
         my $index = @js;
 
         $index = crc32($function . $task->unique) % $index;
